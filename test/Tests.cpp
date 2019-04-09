@@ -14,14 +14,22 @@
 #define DEFINING_ENUM ENUM_FOO_DEFINITION
 #include <MakeEnum.h>
 
-#define ENUM_BAR_DEFINITION                                                                        \
-	BEGIN_ENUM(Bar, long long)                                                                       \
+#define ENUM_BAR_DEFINITION(Prefix)                                                                \
+	BEGIN_ENUM(Prefix Bar, long long)                                                                \
 		ENUM(a, 1000)                                                                                  \
 		ENUM(b)                                                                                        \
 		ENUM(c, 100000)                                                                                \
 	END_ENUM(Bar)
 
-#define DEFINING_ENUM ENUM_BAR_DEFINITION
+struct TestStruct
+{
+#define DONT_GENERATE_INFO
+#define DEFINING_ENUM ENUM_BAR_DEFINITION()
+#include <MakeEnum.h>
+};
+
+#define DONT_GENERATE_DEFINITION
+#define DEFINING_ENUM ENUM_BAR_DEFINITION(TestStruct::)
 #include <MakeEnum.h>
 
 TEST_CASE("SillyEnum", "[EnumGeneration]")
@@ -42,5 +50,7 @@ TEST_CASE("SillyEnum", "[EnumGeneration]")
 		Foo foundEnumerator;
 		REQUIRE(SillyEnum::FindEnumerator<Foo>("a"sv, foundEnumerator));
 		REQUIRE(foundEnumerator == Foo::a);
+
+		REQUIRE(static_cast<long long>(TestStruct::Bar::a) == 1000);
 	}
 }
